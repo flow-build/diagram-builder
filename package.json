@@ -1,6 +1,6 @@
 {
   "name": "@flowbuild/nodejs-diagram-builder",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Diagram builder from workflow blueprint",
   "main": "index.js",
   "scripts": {
