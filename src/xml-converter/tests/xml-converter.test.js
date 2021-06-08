@@ -69,7 +69,7 @@ describe('parsing tests', function () {
     it("Start node", async function () {
 
       const expectedXML = '<bpmn:startEvent xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
-        'id="Node_1" name="Start_node">' +
+        'id="Node_1" name="1&#10;Start node">' +
         '<bpmn:outgoing>Flow_1_2</bpmn:outgoing>' +
         '</bpmn:startEvent>';
 
@@ -82,7 +82,7 @@ describe('parsing tests', function () {
     it("Finish node", async function () {
 
       const expectedXML = '<bpmn:endEvent xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
-        'id="Node_99" name="Finish_node">' +
+        'id="Node_99" name="99&#10;Finish node">' +
         '<bpmn:incoming>Flow_2_99</bpmn:incoming>' +
         '</bpmn:endEvent>';
 
@@ -94,7 +94,7 @@ describe('parsing tests', function () {
     it("System task node", async function () {
 
       const expectedXML = '<bpmn:serviceTask xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
-        'id="Node_2" name="Set_to_bag_node">' +
+        'id="Node_2" name="2&#10;Set to bag node">' +
         '<bpmn:incoming>Flow_1_2</bpmn:incoming>' +
         '<bpmn:outgoing>Flow_2_99</bpmn:outgoing>' +
         '</bpmn:serviceTask>';
@@ -108,7 +108,7 @@ describe('parsing tests', function () {
       const sequences = converter.buildSequenceFlows(script_example.blueprint_spec.nodes);
 
       const expectedXML = '<bpmn:scriptTask xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
-        'id="Node_2" name="Script_tag">' +
+        'id="Node_2" name="2&#10;Script tag">' +
         '<bpmn:incoming>Flow_1_2</bpmn:incoming>' +
         '<bpmn:outgoing>Flow_2_99</bpmn:outgoing>' +
         '</bpmn:scriptTask>';
@@ -201,14 +201,14 @@ describe('parsing tests', function () {
         '<bpmn:flowNodeRef>Node_99</bpmn:flowNodeRef>' +
         '</bpmn:lane>' +
         '</bpmn:laneSet>' +
-        '<bpmn:startEvent id="Node_1" name="Start_node">' +
+        '<bpmn:startEvent id="Node_1" name="1&#10;Start node">' +
         '<bpmn:outgoing>Flow_1_2</bpmn:outgoing>' +
         '</bpmn:startEvent>' +
-        '<bpmn:serviceTask id="Node_2" name="Set_to_bag_node">' +
+        '<bpmn:serviceTask id="Node_2" name="2&#10;Set to bag node">' +
         '<bpmn:incoming>Flow_1_2</bpmn:incoming>' +
         '<bpmn:outgoing>Flow_2_99</bpmn:outgoing>' +
         '</bpmn:serviceTask>' +
-        '<bpmn:endEvent id="Node_99" name="Finish_node">' +
+        '<bpmn:endEvent id="Node_99" name="99&#10;Finish node">' +
         '<bpmn:incoming>Flow_2_99</bpmn:incoming>' +
         '</bpmn:endEvent>' +
         '<bpmn:sequenceFlow id="Flow_1_2" sourceRef="Node_1" targetRef="Node_2" />' +
@@ -235,14 +235,14 @@ describe('parsing tests', function () {
         '<bpmn:flowNodeRef>Node_99</bpmn:flowNodeRef>' +
         '</bpmn:lane>' +
         '</bpmn:laneSet>' +
-        '<bpmn:startEvent id="Node_1" name="Start_node">' +
+        '<bpmn:startEvent id="Node_1" name="1&#10;Start node">' +
         '<bpmn:outgoing>Flow_1_2</bpmn:outgoing>' +
         '</bpmn:startEvent>' +
-        '<bpmn:serviceTask id="Node_2" name="Set_to_bag_node">' +
+        '<bpmn:serviceTask id="Node_2" name="2&#10;Set to bag node">' +
         '<bpmn:incoming>Flow_1_2</bpmn:incoming>' +
         '<bpmn:outgoing>Flow_2_99</bpmn:outgoing>' +
         '</bpmn:serviceTask>' +
-        '<bpmn:endEvent id="Node_99" name="Finish_node">' +
+        '<bpmn:endEvent id="Node_99" name="99&#10;Finish node">' +
         '<bpmn:incoming>Flow_2_99</bpmn:incoming>' +
         '</bpmn:endEvent>' +
         '<bpmn:sequenceFlow id="Flow_1_2" sourceRef="Node_1" targetRef="Node_2" />' +

@@ -1,8 +1,4 @@
-/* eslint-disable class-methods-use-this */
-/* eslint-disable max-len */
-/* eslint-disable camelcase */
-/**
- * @file xml-converter.js
+/* @file xml-converter.js
  *
  * @brief Loads a json blueprint and build a bpmn xml representation
  *
@@ -71,20 +67,20 @@ class XmlConverter {
     params.incoming = incoming_flows[XmlConverter.stdNodeId(node.id)];
 
     switch (type) {
-      case 'systemtask':
-        return this.moddle.create('bpmn:ServiceTask', params);
+    case 'systemtask':
+      return this.moddle.create('bpmn:ServiceTask', params);
 
-      case 'usertask':
-        return this.moddle.create('bpmn:UserTask', params);
+    case 'usertask':
+      return this.moddle.create('bpmn:UserTask', params);
 
-      case 'scripttask':
-        return this.moddle.create('bpmn:ScriptTask', params);
+    case 'scripttask':
+      return this.moddle.create('bpmn:ScriptTask', params);
 
-      case 'subprocess':
-        return this.moddle.create('bpmn:SubProcess', params);
+    case 'subprocess':
+      return this.moddle.create('bpmn:SubProcess', params);
 
-      default:
-        return this.moddle.create('bpmn:Task', params);
+    default:
+      return this.moddle.create('bpmn:Task', params);
     }
   }
 
@@ -412,38 +408,38 @@ class XmlConverter {
       const list_childs = [];
 
       switch (typeof curr_node.next) {
-        case 'string':
-          list_childs.push(curr_node.next);
-          break;
+      case 'string':
+        list_childs.push(curr_node.next);
+        break;
 
-        case 'object':
-          if (curr_node.next) {
-            Object.keys(curr_node.next).filter((key) => {
-              const next_node_id = curr_node.next[key];
-              const next_node = nodes[id2index[next_node_id]];
-              return next_node.type.toLowerCase() !== 'flow';
-            }).sort((key_a, key_b) => curr_node.next[key_a] > curr_node.next[key_b]).forEach((key) => {
-              const next_node_id = curr_node.next[key];
-              if (!list_childs.includes(next_node_id)) {
-                list_childs.push(next_node_id);
-              }
-            });
+      case 'object':
+        if (curr_node.next) {
+          Object.keys(curr_node.next).filter((key) => {
+            const next_node_id = curr_node.next[key];
+            const next_node = nodes[id2index[next_node_id]];
+            return next_node.type.toLowerCase() !== 'flow';
+          }).sort((key_a, key_b) => curr_node.next[key_a] > curr_node.next[key_b]).forEach((key) => {
+            const next_node_id = curr_node.next[key];
+            if (!list_childs.includes(next_node_id)) {
+              list_childs.push(next_node_id);
+            }
+          });
 
-            Object.keys(curr_node.next).forEach((key) => {
-              const next_node_id = curr_node.next[key];
-              if (!list_childs.includes(next_node_id)) {
-                list_childs.push(next_node_id);
-              }
-            });
-          }
-          break;
+          Object.keys(curr_node.next).forEach((key) => {
+            const next_node_id = curr_node.next[key];
+            if (!list_childs.includes(next_node_id)) {
+              list_childs.push(next_node_id);
+            }
+          });
+        }
+        break;
 
-        case 'undefined':
-          break;
+      case 'undefined':
+        break;
 
-        default:
-          debug('xml-converter.discoverNodeRanks() -> Unsupported type!', typeof curr_node.next);
-          break;
+      default:
+        debug('xml-converter.discoverNodeRanks() -> Unsupported type!', typeof curr_node.next);
+        break;
       }
 
       const curr_pos = grids[curr_node.lane_id].getNodePos(XmlConverter.stdNodeId(curr_node.id));
