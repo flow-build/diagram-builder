@@ -56,7 +56,7 @@ git remote add upstream https://github.com/flow-build/diagram-builder.git
 - Make your changes in a new git branch:
 
 ```shell
-git checkout -b my-fix-branch master
+git checkout -b my-fix-branch main
 ```
 
 see [branch name pattern](https://github.com/flow-build/flow-build/wiki/Branch-Pattern) to help us for better identification.
@@ -77,7 +77,7 @@ Note: the optional commit `-a` command line option will automatically "add" and 
 git push origin my-fix-branch
 ```
 
-In GitHub, send a pull request to `diagram-builder:master`.
+In GitHub, send a pull request to `diagram-builder:main`.
 If we suggest changes, then:
 
 - Make the required updates.
@@ -89,7 +89,7 @@ If the PR gets too outdated we may ask you to rebase and force push to update th
 
 ```shell
 git fetch upstream
-git rebase upstream/master
+git rebase upstream/main
 git push origin my-fix-branch -f
 ```
 
@@ -106,10 +106,10 @@ from the main (upstream) repository:
     git push origin --delete my-fix-branch
     ```
 
-- Check out the master branch:
+- Check out the main branch:
 
     ```shell
-    git checkout master -f
+    git checkout main -f
     ```
 
 - Delete the local branch:
@@ -118,10 +118,10 @@ from the main (upstream) repository:
     git branch -D my-fix-branch
     ```
 
-- Update your master with the latest upstream version:
+- Update your main with the latest upstream version:
 
     ```shell
-    git pull --ff upstream master
+    git pull --ff upstream main
     ```
 
 ## <a name="format"></a> Coding Format
