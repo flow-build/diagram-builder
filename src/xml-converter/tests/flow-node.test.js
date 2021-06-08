@@ -24,7 +24,7 @@ describe('parsing tests', function () {
     it('should parse flow node', async function () {
       const expectedXML =
         '<bpmn:exclusiveGateway xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
-        'id="Node_3" name="Chooses_bag">' +
+        'id="Node_3" name="3&#10;Chooses bag">' +
         '<bpmn:incoming>Flow_2_3</bpmn:incoming>' +
         '<bpmn:outgoing>Flow_3_4</bpmn:outgoing>' +
         '<bpmn:outgoing>Flow_3_5</bpmn:outgoing>' +
@@ -55,27 +55,27 @@ describe('parsing tests', function () {
         '<bpmn:flowNodeRef>Node_99</bpmn:flowNodeRef>' +
         '</bpmn:lane>' +
         '</bpmn:laneSet>' +
-        '<bpmn:startEvent id="Node_1" name="Start_node">' +
+        '<bpmn:startEvent id="Node_1" name="1&#10;Start node">' +
         '<bpmn:outgoing>Flow_1_2</bpmn:outgoing>' +
         '</bpmn:startEvent>' +
-        '<bpmn:scriptTask id="Node_2" name="Create_values_for_bag">' +
+        '<bpmn:scriptTask id="Node_2" name="2&#10;Create values for bag">' +
         '<bpmn:incoming>Flow_1_2</bpmn:incoming>' +
         '<bpmn:outgoing>Flow_2_3</bpmn:outgoing>' +
         '</bpmn:scriptTask>' +
-        '<bpmn:exclusiveGateway id="Node_3" name="Chooses_bag">' +
+        '<bpmn:exclusiveGateway id="Node_3" name="3&#10;Chooses bag">' +
         '<bpmn:incoming>Flow_2_3</bpmn:incoming>' +
         '<bpmn:outgoing>Flow_3_4</bpmn:outgoing>' +
         '<bpmn:outgoing>Flow_3_5</bpmn:outgoing>' +
         '</bpmn:exclusiveGateway>' +
-        '<bpmn:serviceTask id="Node_4" name="Set_to_bag_1">' +
+        '<bpmn:serviceTask id="Node_4" name="4&#10;Set to bag 1">' +
         '<bpmn:incoming>Flow_3_4</bpmn:incoming>' +
         '<bpmn:outgoing>Flow_4_99</bpmn:outgoing>' +
         '</bpmn:serviceTask>' +
-        '<bpmn:serviceTask id="Node_5" name="Set_to_bag_2">' +
+        '<bpmn:serviceTask id="Node_5" name="5&#10;Set to bag 2">' +
         '<bpmn:incoming>Flow_3_5</bpmn:incoming>' +
         '<bpmn:outgoing>Flow_5_99</bpmn:outgoing>' +
         '</bpmn:serviceTask>' +
-        '<bpmn:endEvent id="Node_99" name="Finish_node">' +
+        '<bpmn:endEvent id="Node_99" name="99&#10;Finish node">' +
         '<bpmn:incoming>Flow_4_99</bpmn:incoming>' +
         '<bpmn:incoming>Flow_5_99</bpmn:incoming>' +
         '</bpmn:endEvent>' +
