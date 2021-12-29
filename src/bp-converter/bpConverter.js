@@ -1,6 +1,7 @@
 const xml2js = require('xml2js')
 const stripPrefix = require('xml2js').processors.stripPrefix;
 const { logger } = require('../utils/logger');
+const { validateBlueprint, validateNodes } = require('../utils/workflow.validator');
 
 class BpConverter {
   constructor() {
@@ -35,28 +36,36 @@ class BpConverter {
   }
 
   getLane() {
-    return this.lanes.find(lane => lane.flowNodeRef.includes(this.node.base.id)).base.name
+    if(this.lanes) {
+      return this.lanes.find(lane => lane.flowNodeRef.includes(this.node.base.id)).base.name
+    } else {
+      return null
+    }
   }
 
   buildLanes() {
     logger.verbose(`building lanes`)
-    return this.lanes.map(lane => { 
-      logger.debug(`building lane ${lane.base.name}`)
-      return { 
-        id: lane.base.name, 
-        name: lane.base.id, 
-        rule: this.parseRule(lane.base.rule)
-      }
-    })
+    if(this.lanes) {
+      return this.lanes.map(lane => { 
+        logger.debug(`building lane ${lane.base.name}`)
+        return { 
+          id: lane.base.name, 
+          name: lane.base.id, 
+          rule: this.parseRule(lane.base.rule)
+        }
+      })
+    } else {
+      logger.warn(`No lanes defined`)
+      return []
+    }
   }
 
   parseRule(rule) {
-    
     let result;
 
     if(!rule) {
       logger.warn(`rule -> not defined`)
-      return { $js: "() => true" };
+      return null;
     }
   
     try {
@@ -75,6 +84,8 @@ class BpConverter {
   getNext() {
     if(this.node.outgoing) {
       return this.connectors.find(connector => connector.base.id === this.node.outgoing[0]).base.targetRef
+    } else {
+      return null
     }
   }
 
@@ -116,8 +127,9 @@ class BpConverter {
     logger.debug(`building ${this.node.base.name} nodes, id [${this.node.base.id}]`)
     return {
       id: this.node.base.id,
-      name: this.node.base.name,
+      name: this.node.base.name || "",
       type,
+      category: this.node.base.category,
       next: type === "Flow" ? this.buildFlowNext() : this.getNext(),
       lane_id: this.getLane(),
       parameters: this.buildParameters(type)
@@ -134,9 +146,10 @@ class BpConverter {
       attrNameProcessors: [stripPrefix]
     });
   
+    const tasks = baseJson.process[0].task;
     const workflow = baseJson.collaboration[0].participant[0];
     const userTasks = baseJson.process[0].userTask;
-    const systemTasks = baseJson.process[0].serviceTask
+    const systemTasks = baseJson.process[0].serviceTask;
     const finishEvents = baseJson.process[0].endEvent;
     const flowEvents = baseJson.process[0].exclusiveGateway;
     const startEvents = baseJson.process[0].startEvent;
@@ -151,30 +164,44 @@ class BpConverter {
       logger.debug('building start nodes')
       nodes.push(this.buildNode(element, 'Start'))
     });
-  
-    userTasks.forEach(element => {
-      logger.debug('building userTasks')
-      nodes.push(this.buildNode(element, 'userTask'))
-    });
-  
-    systemTasks.forEach(element => {
-      logger.debug('building systemTasks')
-      nodes.push(this.buildNode(element, 'systemTask'))
-    });
-  
-    flowEvents.forEach(element => {
-      logger.debug('building flow nodes')
-      nodes.push(this.buildNode(element, 'Flow'))
-    });
 
-    finishEvents.forEach(element => {
-      logger.debug('building finish nodes')
-      nodes.push(this.buildNode(element, 'Finish'))
-    });
+    if(tasks) {
+      tasks.forEach(element => {
+        logger.debug('building tasks')
+        nodes.push(this.buildNode(element, null))
+      });  
+    }
+
+    if(userTasks) {
+      userTasks.forEach(element => {
+        logger.debug('building userTasks')
+        nodes.push(this.buildNode(element, 'userTask'))
+      });  
+    }
   
+    if(systemTasks) {
+      systemTasks.forEach(element => {
+        logger.debug('building systemTasks')
+        nodes.push(this.buildNode(element, 'systemTask'))
+      });
+    }
+  
+    if(flowEvents) {
+      flowEvents.forEach(element => {
+        logger.debug('building flow nodes')
+        nodes.push(this.buildNode(element, 'Flow'))
+      });
+    }
+
+    if(finishEvents) {
+      finishEvents.forEach(element => {
+        logger.debug('building finish nodes')
+        nodes.push(this.buildNode(element, 'Finish'))
+      });
+    }
     
     const blueprint = {
-      name: workflow.base.name,
+      name: workflow.base.name || "",
       description: "",
       blueprint_spec: {
         requirements: ["core"],
@@ -185,7 +212,15 @@ class BpConverter {
       }
     }
     logger.info('conversion done!')   
-    return blueprint;
+
+    const blueprintValidation = await validateBlueprint(blueprint)
+    const nodesValidation = await validateNodes(nodes)
+
+    return {
+      blueprint,
+      validation: blueprintValidation,
+      nodesValidation
+    };
   }
 }
 
