@@ -24,6 +24,8 @@
     "semantic-release": "^17.4.3"
   },
   "dependencies": {
+    "ajv": "^8.8.2",
+    "ajv-formats": "^2.1.1",
     "bpmn-moddle": "^7.1.2",
     "debug": "^4.3.3",
     "winston": "^3.3.3",
