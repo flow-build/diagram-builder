@@ -26,6 +26,7 @@
   "dependencies": {
     "bpmn-moddle": "^7.1.2",
     "debug": "^4.3.3",
+    "winston": "^3.3.3",
     "xml2js": "^0.4.23"
   },
   "bugs": {
