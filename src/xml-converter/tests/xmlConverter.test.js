@@ -223,7 +223,7 @@ describe('xml generator', () => {
     const diagram = fs.readFileSync('src/xml-converter/tests/diagrams/allNodes.bpmn', 'UTF-8')
     converter.buildGraph(allNodeTypes);
     const result = await converter.to_xml();
-    fs.writeFileSync(`assets/allnodes.bpmn`, result);
+    //fs.writeFileSync(`assets/allnodes.bpmn`, result);
     expect(result).toEqualXML(diagram);
   });
 });
