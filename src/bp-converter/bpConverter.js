@@ -1,4 +1,5 @@
 const xml2js = require('xml2js')
+const _ = require('lodash')
 const stripPrefix = require('xml2js').processors.stripPrefix;
 const { logger } = require('../utils/logger');
 const { validateBlueprint, validateNodes } = require('../utils/workflow.validator');
@@ -7,15 +8,19 @@ class BpConverter {
   constructor() {
     this.connectors = [];
     this.lanes = [];
+    this.knownTypes = [
+      'base', 'laneSet', 'task', 'userTask', 'serviceTask', 'endEvent', 'exclusiveGateway', 'subProcess', 'intermediateCatchEvent', 'startEvent', 'sequenceFlow'
+    ]
+    
     this.parameterDefaults = {
       Start: {
         input_schema: {},
-        timeout: 600
+        timeout: 0
       },
       userTask: {
         input: {},
         action: "",
-        timeout: 600,
+        timeout: 0,
         activity_schema: {
           type: 'object',
           properties: {}
@@ -31,8 +36,71 @@ class BpConverter {
       },
       Finish: {
         input: {}
+      },
+      subProcess: {
+        input: {
+          workflow_name: "",
+          valid_response: ""
+        },
+        actor_data: ""
+      },
+      timer: {
+        input: {},
+        timeout: 0,
       }
     }
+    this.categoryDefaults = {
+      timer: 'timer',
+      subProcess: 'subProcess',
+      systemTask: ""
+    }
+    this.typeDefaults = {
+      timer: 'systemTask',
+      subProcess: 'systemTask'
+    }
+  }
+
+  buildLanes() {
+    logger.verbose(`[bpConverter] Build lanes`)
+
+    if(!this.lanes) {
+      logger.warn(`No lanes defined`)
+      return []
+    }
+
+    return this.lanes.map(lane => { 
+      logger.debug(`building lane ${lane.base.name}`)
+      return { 
+        id: lane.base.name, 
+        name: lane.base.id, 
+        rule: this.parseRule(lane.base.rule)
+      }
+    })
+  }
+
+  buildParameters(type) {
+    logger.verbose(`[bpConverter] Build parameters`)
+    const data = this.node.base.parameters;
+    
+    if(!data) {
+      logger.warn(`parameters -> not defined for node [${this.node.base.name}]`)
+      return this.parameterDefaults[type]
+    }
+  
+    try {
+      logger.debug(`parameters -> parsing ${type}`)
+      if(typeof data === 'string') {
+        return JSON.parse(data)
+      } else {
+        return data
+      }
+    } catch(e) {
+      logger.error(`parameters -> unable to convert, error ${e}`)
+    }
+  }
+
+  getCategory(type) {
+    return this.node.base.category || this.categoryDefaults[type]
   }
 
   getLane() {
@@ -42,45 +110,7 @@ class BpConverter {
       return null
     }
   }
-
-  buildLanes() {
-    logger.verbose(`building lanes`)
-    if(this.lanes) {
-      return this.lanes.map(lane => { 
-        logger.debug(`building lane ${lane.base.name}`)
-        return { 
-          id: lane.base.name, 
-          name: lane.base.id, 
-          rule: this.parseRule(lane.base.rule)
-        }
-      })
-    } else {
-      logger.warn(`No lanes defined`)
-      return []
-    }
-  }
-
-  parseRule(rule) {
-    let result;
-
-    if(!rule) {
-      logger.warn(`rule -> not defined`)
-      return null;
-    }
   
-    try {
-      logger.debug(`rule -> parsing`)
-      if(typeof rule === 'string') {
-        result = JSON.parse(rule)
-      } else {
-        result = rule
-      }
-    } catch(e) {
-      logger.error(`rule -> unable to convert, error ${e}`)
-    }
-    return result
-  }
-
   getNext() {
     if(this.node.outgoing) {
       return this.connectors.find(connector => connector.base.id === this.node.outgoing[0]).base.targetRef
@@ -89,7 +119,7 @@ class BpConverter {
     }
   }
 
-  buildFlowNext() {
+  getNextFlow() {
     let result = {};
     this.connectors.forEach(connector => {
       if (connector.base.sourceRef === this.node.base.id) {
@@ -100,44 +130,47 @@ class BpConverter {
     return result;
   }
 
-  buildParameters(type) {
-    const data = this.node.base.parameters;
-    let result = this.parameterDefaults[type]
-  
-    if(!data) {
-      logger.warn(`parameters -> not defined for node [${this.node.base.name}]`)
-      return result;
+  getType(type) {
+    return this.typeDefaults[type] || type
+  }
+
+  parseRule(rule) {
+    logger.verbose(`[bpConverter] Parse Lane Rule`)
+    
+    if(!rule) {
+      logger.warn(`rule not defined`)
+      return null;
     }
   
     try {
-      logger.debug(`parameters -> parsing ${type}`)
-      if(typeof data === 'string') {
-        result = JSON.parse(data)
+      if(typeof rule === 'string') {
+        return JSON.parse(rule)
       } else {
-        result = data
+        return rule
       }
     } catch(e) {
-      logger.error(`parameters -> unable to convert, error ${e}`)
+      logger.error(`rule -> unable to convert, error ${e}`)
     }
-    return result
   }
 
   buildNode(node, type) {
+    logger.verbose(`[bpConverter] Build Node [${node.base.name}]`)
+
     this.node = node;
-    logger.debug(`building ${this.node.base.name} nodes, id [${this.node.base.id}]`)
+    
     return {
       id: this.node.base.id,
       name: this.node.base.name || "",
-      type,
-      category: this.node.base.category,
-      next: type === "Flow" ? this.buildFlowNext() : this.getNext(),
+      type: this.getType(type),
+      category: this.getCategory(type),
+      next: type === "Flow" ? this.getNextFlow() : this.getNext(),
       lane_id: this.getLane(),
       parameters: this.buildParameters(type)
     }
   }
 
   async convert(data) {
-    logger.info('starting conversion');
+    logger.info('[bpConverter] Convert Diagram');
 
     let baseJson = await xml2js.parseStringPromise(data, {
       explicitRoot: false,
@@ -146,13 +179,31 @@ class BpConverter {
       attrNameProcessors: [stripPrefix]
     });
   
+    if(!baseJson.collaboration) {
+      return {
+        validation: {
+          isValid: false,
+          errors: [ { message: 'No pool defined' } ]
+        }
+      };
+    }
+
+    const elements = baseJson.process[0];
+    const elementTypes = Object.keys(elements);
+    const unknownTypes = _.difference(elementTypes, this.knownTypes)
+
+    if(unknownTypes.length > 0) { logger.warn('unknown element types') }
+
     const tasks = baseJson.process[0].task;
     const workflow = baseJson.collaboration[0].participant[0];
     const userTasks = baseJson.process[0].userTask;
     const systemTasks = baseJson.process[0].serviceTask;
     const finishEvents = baseJson.process[0].endEvent;
     const flowEvents = baseJson.process[0].exclusiveGateway;
+    const subProcesses = baseJson.process[0].subProcess;
+    const timers = baseJson.process[0].intermediateCatchEvent?.filter(item => item.timerEventDefinition);
     const startEvents = baseJson.process[0].startEvent;
+
     this.lanes = baseJson.process[0]?.laneSet?.[0]?.lane;
     this.connectors = baseJson.process[0].sequenceFlow;
   
@@ -161,45 +212,51 @@ class BpConverter {
     const nodes = [];
   
     startEvents.forEach(element => {
-      logger.debug('building start nodes')
       nodes.push(this.buildNode(element, 'Start'))
     });
 
     if(tasks) {
       tasks.forEach(element => {
-        logger.debug('building tasks')
         nodes.push(this.buildNode(element, null))
       });  
     }
 
     if(userTasks) {
       userTasks.forEach(element => {
-        logger.debug('building userTasks')
         nodes.push(this.buildNode(element, 'userTask'))
       });  
     }
   
     if(systemTasks) {
       systemTasks.forEach(element => {
-        logger.debug('building systemTasks')
         nodes.push(this.buildNode(element, 'systemTask'))
       });
     }
   
     if(flowEvents) {
       flowEvents.forEach(element => {
-        logger.debug('building flow nodes')
         nodes.push(this.buildNode(element, 'Flow'))
       });
     }
 
     if(finishEvents) {
       finishEvents.forEach(element => {
-        logger.debug('building finish nodes')
         nodes.push(this.buildNode(element, 'Finish'))
       });
     }
+
+    if(subProcesses) {
+      subProcesses.forEach(element => {
+        nodes.push(this.buildNode(element, 'subProcess'))
+      });
+    }
     
+    if(timers) {
+      timers.forEach(element => {
+        nodes.push(this.buildNode(element, 'timer'))
+      });
+    }
+
     const blueprint = {
       name: workflow.base.name || "",
       description: "",
@@ -211,15 +268,15 @@ class BpConverter {
         nodes
       }
     }
-    logger.info('conversion done!')   
-
+    
     const blueprintValidation = await validateBlueprint(blueprint)
     const nodesValidation = await validateNodes(nodes)
 
     return {
       blueprint,
       validation: blueprintValidation,
-      nodesValidation
+      nodesValidation,
+      unknownTypes
     };
   }
 }
