@@ -1,4 +1,4 @@
-const { XmlConverter } = require('./src/xml-converter/xml-converter');
+const { XmlConverter } = require('./src/xml-converter/xmlConverter');
 const { BpConverter } = require('./src/bp-converter/bpConverter');
 
 async function buildXmlDiagram(blueprintSpec, workflowName, format=false) {
