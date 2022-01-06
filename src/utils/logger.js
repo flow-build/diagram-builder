@@ -1,7 +1,7 @@
 const { createLogger, format, transports, config } = require("winston");
 
 const logger = createLogger({
-  level: "info",
+  level: process.env.LOG_LEVEL || "warn",
   levels: config.npm.levels,
   format: format.combine(
     format.padLevels(),
