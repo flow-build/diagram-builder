@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { createLogger, format, transports, config } = require("winston");
 
 const logger = createLogger({
