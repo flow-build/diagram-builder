@@ -127,8 +127,7 @@ describe('Lane parser', () => {
       '</bpmn:lane>' +
       '</bpmn:laneSet>';
 
-    const obj = converter.buildGraph(simpleWorkflow);
-    console.log(obj)
+    converter.buildGraph(simpleWorkflow);
 
     const { xml } = await write(converter.xml_laneset);
     expect(xml).toEqual(expectedXML);
@@ -159,7 +158,7 @@ describe('Collab parser', () => {
   test("Create participant tag", async function () {
     const converter = new XmlConverter();
     const expectedXML = '<bpmn:participant xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
-      'id="Global_Actor" name="SIMPLE_WORKFLOW" processRef="ec1949b8-a2d6-4e9d-8cec-648bc13d3c49" />';
+      'id="Global_Actor" name="SIMPLE_WORKFLOW" processRef="Global_Process" />';
 
     converter.buildGraph(simpleWorkflow);
     const { xml } = await write(converter.xml_participant);
@@ -170,8 +169,8 @@ describe('Collab parser', () => {
   test("Create collab tag", async function () {
     const converter = new XmlConverter();
     const expectedXML = '<bpmn:collaboration xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
-      'id="Global_Colab">' +
-      '<bpmn:participant id="Global_Actor" name="SIMPLE_WORKFLOW" processRef="ec1949b8-a2d6-4e9d-8cec-648bc13d3c49" />' +
+      'id="Global_Colab" workflowId="ec1949b8-a2d6-4e9d-8cec-648bc13d3c49">' +
+      '<bpmn:participant id="Global_Actor" name="SIMPLE_WORKFLOW" processRef="Global_Process" />' +
       '</bpmn:collaboration>';
 
     converter.buildGraph(simpleWorkflow);
@@ -182,7 +181,7 @@ describe('Collab parser', () => {
 
   test("Build process tag", async function () {
     const converter = new XmlConverter();
-    const expectedXML = '<bpmn:process xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="ec1949b8-a2d6-4e9d-8cec-648bc13d3c49" isExecutable="true">' + '<bpmn:laneSet id="Global_LaneSet">' +
+    const expectedXML = '<bpmn:process xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Global_Process" isExecutable="true">' + '<bpmn:laneSet id="Global_LaneSet">' +
       '<bpmn:lane id="Lane_99" name="everyone">' +
       '<bpmn:flowNodeRef>Node_1</bpmn:flowNodeRef>' +
       '<bpmn:flowNodeRef>Node_2</bpmn:flowNodeRef>' +
