@@ -4,6 +4,8 @@ const workflowSchema = {
     workflow_id: { type: "string", format: "uuid" },
     name: { type: "string" },
     description: { type: "string" },
+    version: { type: "integer" },
+    blueprint_hash: { type: "string" },
     blueprint_spec: {
       type: "object",
       properties: {
@@ -69,12 +71,9 @@ const workflowSchema = {
           minItems: 2,
         },
       },
-      additionalProperties: false,
       required: ["requirements", "prepare", "environment", "lanes", "nodes"],
-    },
-    additionalProperties: false,
+    }
   },
-  additionalProperties: false,
   required: ["name", "description", "blueprint_spec"],
 };
   
