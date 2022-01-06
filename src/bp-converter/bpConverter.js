@@ -269,14 +269,18 @@ class BpConverter {
       }
     }
     
-    const blueprintValidation = await validateBlueprint(blueprint)
-    const nodesValidation = await validateNodes(nodes)
+    const blueprintValidation = validateBlueprint(blueprint)
+    const nodesValidation = validateNodes(nodes)
 
     return {
       blueprint,
-      validation: blueprintValidation,
-      nodesValidation,
-      unknownTypes
+      validations: {
+        blueprint: blueprintValidation,
+        nodes: nodesValidation,
+        diagram: {
+          unknownTypes
+        }
+      }
     };
   }
 }

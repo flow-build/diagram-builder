@@ -21,7 +21,7 @@ test('works with a complete, all parameters, single lane diagram', async () => {
   expect(blueprint.blueprint_spec.requirements).toEqual(expect.arrayContaining(["core"]));
   expect(blueprint.blueprint_spec.environment).toBeDefined();
 
-  expect(result.validation.isValid).toBeTruthy();
+  expect(result.validations.blueprint.isValid).toBeTruthy();
 
   expect(blueprint).toMatchObject(expectedBp.blueprint)
 })
@@ -44,7 +44,7 @@ test('works with a diagram with pool but no lane, returning validation errors', 
   expect(blueprint.blueprint_spec.requirements).toEqual(expect.arrayContaining(["core"]));
   expect(blueprint.blueprint_spec.environment).toBeDefined();
 
-  expect(result.validation.isValid).toBeFalsy();
+  expect(result.validations.blueprint.isValid).toBeFalsy();
 })
 
 test('works with all nodes elements (flowbuild version 2.5.0)', async () => {
@@ -65,7 +65,7 @@ test('works with all nodes elements (flowbuild version 2.5.0)', async () => {
   expect(blueprint.blueprint_spec.requirements).toEqual(expect.arrayContaining(["core"]));
   expect(blueprint.blueprint_spec.environment).toBeDefined();
 
-  expect(result.validation.isValid).toBeFalsy();
+  expect(result.validations.blueprint.isValid).toBeFalsy();
 })
 
 test('works with all nodes elements (flowbuild version 2.5.0) and multiple lanes', async () => {
@@ -91,7 +91,7 @@ test('works with all nodes elements (flowbuild version 2.5.0) and multiple lanes
   expect(blueprint.blueprint_spec.requirements).toEqual(expect.arrayContaining(["core"]));
   expect(blueprint.blueprint_spec.environment).toBeDefined();
 
-  expect(result.validation.isValid).toBeFalsy();
+  expect(result.validations.blueprint.isValid).toBeFalsy();
 })
 
 test('return error with no pool is defined', async () => {
@@ -123,7 +123,7 @@ test('works with pool but no types', async () => {
   expect(blueprint.blueprint_spec.requirements).toEqual(expect.arrayContaining(["core"]));
   expect(blueprint.blueprint_spec.environment).toBeDefined();
 
-  expect(result.validation.isValid).toBeFalsy();
+  expect(result.validations.blueprint.isValid).toBeFalsy();
 })
 
 
@@ -147,6 +147,6 @@ test('ignore and report unknown types', async () => {
   expect(blueprint.blueprint_spec.requirements).toEqual(expect.arrayContaining(["core"]));
   expect(blueprint.blueprint_spec.environment).toBeDefined();
 
-  expect(result.validation.isValid).toBeFalsy();
-  expect(result.unknownTypes).toBeDefined();
+  expect(result.validations.blueprint.isValid).toBeFalsy();
+  expect(result.validations.diagram.unknownTypes).toBeDefined();
 })
