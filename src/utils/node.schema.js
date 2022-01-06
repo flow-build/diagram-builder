@@ -175,6 +175,27 @@ const categorySchema = {
     },
     required: ["process_id"],
   },
+  subprocess: {
+    type: "object",
+    properties: {
+      input: {
+        type: "object",
+        required: ["workflow_name"],
+        properties: {
+          workflow_name: {
+            oneOf: [{ type: "string" }, { type: "object" }],
+          },
+          valid_response: {
+            oneOf: [{ type: "string" }, { type: "object" }],
+          }
+        }
+      },
+      actor_data: {
+        oneOf: [{ type: "string" }, { type: "object" }],
+      },
+    },
+    required: ["input", "actor_data"],
+  }
 };
   
 module.exports = {

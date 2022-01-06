@@ -1,45 +1,69 @@
-const { validateDataWithSchema } = require("./base.validator");
+const Ajv = require("ajv");
+const addFormats = require("ajv-formats");
+
 const { logger } = require("./logger");
 const { nodeSchema, categorySchema } = require("./node.schema");
 const { workflowSchema } = require("./workflow.schema");
 
+const validateSchema = (schema, data) => {
+  const ajv = new Ajv({ allErrors: true });
+  addFormats(ajv);
+  const validate = ajv.compile(schema);
+  const isValid = validate(data);
+  return {
+    isValid,
+    errors: validate.errors || [],
+  };
+};
+
 const validateBlueprint = (blueprint) => {
-  return validateDataWithSchema(workflowSchema, blueprint);
+  return validateSchema(workflowSchema, blueprint);
 } 
 
-const validateNodes = async (nodes) => {
-  logger.debug("validateNodes");
+const validateNodes = (nodes) => {
+  logger.debug("[validateNodes]");
   
-  const validateNode = nodes.map(async (node) => {
-    logger.debug(`validating node ${node.name}`)
+  const validations = nodes.map((node) => {
+    logger.silly(`validating node ${node.name}`)
     const nodeType = node.type?.toLowerCase();
-    let parametersValidation = {};
-
-    let nodeCategory;
-    if (nodeType === "systemtask") {
-      nodeCategory = node.category?.toLowerCase() || 'not defined';
-    }
-
+    
     let typeValidation = {};
 
     if (nodeSchema[nodeType]) {
       logger.silly(`[${node.name}] validating type [${node.type}]`);
-      typeValidation = await validateDataWithSchema(nodeSchema[nodeType], node);
+      typeValidation = validateSchema(nodeSchema[nodeType], node);
+      typeValidation.warning = false;
     } else {
       logger.info(`[${node.name}] bypassing type validation, no schema defined for type [${nodeType}]`);
-      typeValidation.isValid = null;
+      typeValidation.warning = true;
+      typeValidation.isValid = true;
       typeValidation.errors = [{
         message: 'unknown type'
       }]
     }
 
+    let nodeCategory;
+    let parametersValidation = {};
+    
+    if (nodeType === "systemtask") {
+      nodeCategory = node.category?.toLowerCase() || 'not defined';
+    }
+
     if (nodeCategory) {
       logger.silly(`[${node.name}] validate category`);
       if (categorySchema[nodeCategory]) {
-        parametersValidation = await validateDataWithSchema(categorySchema[nodeCategory], node.parameters);
+        parametersValidation = validateSchema(categorySchema[nodeCategory], node.parameters);
       } else {
-        logger.info(`[${node.name}] bypassing parameters validation, no schema defined for category [${nodeCategory}]`);
-        parametersValidation.isValid = null;
+        if(nodeCategory === 'not defined') {
+          logger.info(`[${node.name}] bypassing parameters validation, no category defined`);   
+        } else {
+          logger.info(`[${node.name}] bypassing parameters validation, no schema defined for category [${nodeCategory}]`);
+        }
+        parametersValidation.warning = true;
+        parametersValidation.isValid = true;
+        parametersValidation.errors = [{
+          message: "parameters schema not defined"
+        }]
       }
     } else {
       parametersValidation.isValid = true;
@@ -47,144 +71,50 @@ const validateNodes = async (nodes) => {
 
     return {
       data: node,
+      warning: typeValidation.warning || parametersValidation.warning,
       isValid: typeValidation.isValid && parametersValidation.isValid,
       errors: [...(typeValidation.errors || []), ...(parametersValidation.errors || [])],
     };
   });
 
-  const nodesResult = await Promise.all(validateNode);
-
-  let errors = nodesResult.reduce((acc, item) => {
-    if (item.isValid) {
-      return acc;
-    } else {
-      return ++acc;
-    }
-  }, 0);
-
-  if (errors > 0) {
-    return {
-      message: "Invalid Node",
-      error: nodesResult
-        .filter((item) => !item.isValid)
-        .map((result) => {
-          let response;
-          response = {
-            node: result.data.id,
-            type: result.data.type,
-            category: result.data.category,
-            errors: result.errors.map((error) => {
-              return {
-                field: error.instancePath,
-                message: error.message,
-              };
-            }),
-          };
-          return response;
-        }),
-    };
-  } else {
-    return {
-      isValid: true
-    };
+  return {
+    isValid: true,
+    warnings: validations.filter((item) => item.warning)
+      .map((result) => {
+        let response;
+        response = {
+          node: result.data.id,
+          type: result.data.type,
+          category: result.data.category,
+          errors: result.errors.map((error) => {
+            return {
+              message: error.message,
+            };
+          }),
+        };
+        return response;
+      }),
+    errors: validations.filter((item) => !item.isValid)
+      .map((result) => {
+        let response;
+        response = {
+          node: result.data.id,
+          type: result.data.type,
+          category: result.data.category,
+          errors: result.errors.map((error) => {
+            return {
+              field: error.instancePath,
+              message: error.message,
+            };
+          }),
+        };
+        return response;
+      }),
   }
+  
 };
-
-validateConnections = async (ctx, next) => {
-  logger.debug("called validateConnections");
-  const blueprintSpec = ctx.request.body.blueprint_spec;
-
-  const lanes = blueprintSpec.lanes.map((lane) => {
-    return lane.id;
-  });
-
-  const nodes = blueprintSpec.nodes.map((node) => {
-    return node.id;
-  });
-
-  const nodeConnections = blueprintSpec.nodes.map(async (node) => {
-    if (node.type === "Flow") {
-      const next = Object.values(node.next);
-      return {
-        id: node.id,
-        name: node.name,
-        unique: nodes.filter((item) => item === node.id).length === 1,
-        lane: lanes.includes(node.lane_id),
-        next: next.reduce((acc, n) => {
-          if (!nodes.includes(n)) {
-            return false;
-          }
-          return acc;
-        }, true),
-      };
-    } else {
-      return {
-        id: node.id,
-        name: node.name,
-        unique: nodes.filter((item) => item === node.id).length === 1,
-        lane: lanes.includes(node.lane_id),
-        next: node.next ? nodes.includes(node.next) : true,
-      };
-    }
-  });
-
-  const nodesResult = await Promise.all(nodeConnections);
-
-  let errors = await nodesResult.reduce((acc, item) => {
-    if (!item.lane || !item.next || !item.unique) {
-      return ++acc;
-    } else {
-      return acc;
-    }
-  }, 0);
-
-  let errorMessage = [];
-
-  if (!isUnique(lanes)) {
-    errors++;
-    errorMessage.push({
-      lanes: "There is a duplicated lane id",
-    });
-  }
-
-  if (errors > 0) {
-    ctx.status = 400;
-    ctx.body = {
-      message: "Invalid Connections",
-      error: [...errorMessage, ...nodesResult.filter((item) => !item.lane || !item.next || !item.unique)],
-    };
-    return;
-  } else {
-    return await next();
-  }
-};
-
-isUnique = (array) => {
-  uniqueArray = [...new Set(array)];
-  return array.length === uniqueArray.length;
-};
-
-validateEnvironmentVariable = (spec) => {
-  let validateInfo = [];
-
-  const nodesString = JSON.stringify(spec.nodes);
-  for (const variable in spec.environment) {
-    if (!process.env[variable.toUpperCase()]) {
-      const error_message = `Variable ${variable} not found at the environment`;
-      validateInfo.push (error_message);
-    }
-    if (!nodesString.includes(`environment.${variable}`)) {
-      const error_message = `Variable ${variable} not declared in any node`;
-      validateInfo.push (error_message);
-    }
-  }
-
-  return validateInfo;
-}
 
 module.exports = {
   validateBlueprint,
-  validateNodes,
-  validateConnections,
-  validateEnvironmentVariable
+  validateNodes
 };
