@@ -96,7 +96,7 @@ class XmlConverter {
 
   getColors(node) {
     logger.verbose(`[xmlConverter] parseSequenceFlow ${node}`)
-    if(node.category === 'setToBag') {
+    if(node.category?.toLowerCase() === 'settobag') {
       return {
         stroke: "#fb8c00",
         fill: "#ffe0b2",
@@ -104,7 +104,7 @@ class XmlConverter {
         border: "#fb8c00"
       }
     }
-    if(node.type === 'userTask') {
+    if(node.type?.toLowerCase() === 'usertask') {
       return {
         stroke: "#1e88e5",
         fill: "#bbdefb",
@@ -112,7 +112,7 @@ class XmlConverter {
         border: "#1e88e5"
       }
     }
-    if(node.category === 'startProcess') {
+    if(node.category?.toLowerCase() === 'startprocess') {
       return {
         stroke: "#43a047",
         fill: "#c8e6c9",
@@ -120,7 +120,7 @@ class XmlConverter {
         border: "#43a047"
       }
     }
-    if(node.category === 'abortProcess') {
+    if(node.category?.toLowerCase() === 'abortprocess') {
       return {
         stroke: "#43a047",
         fill: "#F5A5A3",
@@ -165,7 +165,7 @@ class XmlConverter {
 
     const validation = XmlConverter.validate(blueprint)
     if (!validation.isValid) {
-      logger.error('Invalid blueprint');
+      logger.error('[xmlConverter] Invalid blueprint');
       return {
         error: validation.errors
       }
@@ -177,13 +177,14 @@ class XmlConverter {
 
     this.xml_participant = this.moddle.create('bpmn:Participant', {
       id: 'Global_Actor',
-      processRef: { id: workflowId },
+      processRef: { id: "Global_Process" },
       name: blueprint.name,
     });
 
     this.xml_collab = this.moddle.create('bpmn:Collaboration', {
       id: 'Global_Colab',
       participants: [ this.xml_participant ],
+      workflowId
     });
 
     const { incoming_flows, xml_sequences } = this.buildSequenceFlows(nodes);
@@ -194,7 +195,7 @@ class XmlConverter {
 
     const flowElements = this.xml_nodes.concat(this.xml_sequences);
     this.xml_process = this.moddle.create('bpmn:Process', {
-      id: workflowId,
+      id: "Global_Process",
       laneSets: [ this.xml_laneset ],
       isExecutable: true,
       flowElements,
