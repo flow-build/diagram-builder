@@ -49,7 +49,7 @@ test('works with a diagram with pool but no lane, returning validation errors', 
 
 test('works with all nodes elements (flowbuild version 2.5.0)', async () => {
   const converter = new BpConverter();
-  const diagram = 'src/bp-converter/tests/samples/allNodeTypes.bpmn'
+  const diagram = 'src/bp-converter/tests/samples/allnodetypes.bpmn'
   const diagramData = fs.readFileSync(diagram)
   const result = await converter.convert(diagramData);
   const blueprint = result.blueprint;
@@ -70,7 +70,7 @@ test('works with all nodes elements (flowbuild version 2.5.0)', async () => {
 
 test('works with all nodes elements (flowbuild version 2.5.0) and multiple lanes', async () => {
   const converter = new BpConverter();
-  const diagram = 'src/bp-converter/tests/samples/multipleLanes.bpmn'
+  const diagram = 'src/bp-converter/tests/samples/multiplelanes.bpmn'
   const diagramData = fs.readFileSync(diagram)
   const result = await converter.convert(diagramData);
   const blueprint = result.blueprint;
@@ -107,7 +107,7 @@ test('return error with no pool is defined', async () => {
 
 test('works with pool but no types', async () => {
   const converter = new BpConverter();
-  const diagram = 'src/bp-converter/tests/samples/noTypes.bpmn'
+  const diagram = 'src/bp-converter/tests/samples/notypes.bpmn'
   const diagramData = fs.readFileSync(diagram)
   const result = await converter.convert(diagramData);
   const blueprint = result.blueprint;
@@ -129,7 +129,7 @@ test('works with pool but no types', async () => {
 
 test('ignore and report unknown types', async () => {
   const converter = new BpConverter();
-  const diagram = 'src/bp-converter/tests/samples/unknownTypes.bpmn'
+  const diagram = 'src/bp-converter/tests/samples/unknowntypes.bpmn'
   const diagramData = fs.readFileSync(diagram)
   const result = await converter.convert(diagramData);
   const blueprint = result.blueprint;
