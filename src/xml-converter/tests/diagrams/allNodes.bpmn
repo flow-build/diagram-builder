@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI">
+    <bpmn:process id="Global_Process" isExecutable="true">
+        <bpmn:laneSet id="Global_LaneSet">
+            <bpmn:lane id="Lane_1" name="i am true">
+                <bpmn:flowNodeRef>Node_START</bpmn:flowNodeRef>
+                <bpmn:flowNodeRef>Node_SETTOBAG</bpmn:flowNodeRef>
+                <bpmn:flowNodeRef>Node_FLOW</bpmn:flowNodeRef>
+                <bpmn:flowNodeRef>Node_HTTP</bpmn:flowNodeRef>
+                <bpmn:flowNodeRef>Node_SCRIPT</bpmn:flowNodeRef>
+                <bpmn:flowNodeRef>Node_SUBPROCESS</bpmn:flowNodeRef>
+                <bpmn:flowNodeRef>Node_USERTASK</bpmn:flowNodeRef>
+                <bpmn:flowNodeRef>Node_TIMER</bpmn:flowNodeRef>
+                <bpmn:flowNodeRef>Node_ABORT</bpmn:flowNodeRef>
+                <bpmn:flowNodeRef>Node_STARTPROCESS</bpmn:flowNodeRef>
+            </bpmn:lane>
+            <bpmn:lane id="Lane_2" name="i am false">
+                <bpmn:flowNodeRef>Node_END</bpmn:flowNodeRef>
+            </bpmn:lane>
+        </bpmn:laneSet>
+        <bpmn:startEvent id="Node_START" name="START NODE">
+            <bpmn:outgoing>Flow_START_SETTOBAG</bpmn:outgoing>
+        </bpmn:startEvent>
+        <bpmn:serviceTask id="Node_SETTOBAG" name="SET TO BAG NODE">
+            <bpmn:incoming>Flow_START_SETTOBAG</bpmn:incoming>
+            <bpmn:outgoing>Flow_SETTOBAG_FLOW</bpmn:outgoing>
+        </bpmn:serviceTask>
+        <bpmn:exclusiveGateway id="Node_FLOW" name="FLOW NODE">
+            <bpmn:incoming>Flow_SETTOBAG_FLOW</bpmn:incoming>
+            <bpmn:outgoing>Flow_FLOW_SCRIPT</bpmn:outgoing>
+            <bpmn:outgoing>Flow_FLOW_HTTP</bpmn:outgoing>
+            <bpmn:outgoing>Flow_FLOW_SUBPROCESS</bpmn:outgoing>
+        </bpmn:exclusiveGateway>
+        <bpmn:serviceTask id="Node_HTTP" name="HTTP NODE">
+            <bpmn:incoming>Flow_FLOW_HTTP</bpmn:incoming>
+            <bpmn:outgoing>Flow_HTTP_USERTASK</bpmn:outgoing>
+        </bpmn:serviceTask>
+        <bpmn:scriptTask id="Node_SCRIPT" name="SCRIPT NODE">
+            <bpmn:incoming>Flow_FLOW_SCRIPT</bpmn:incoming>
+            <bpmn:outgoing>Flow_SCRIPT_USERTASK</bpmn:outgoing>
+        </bpmn:scriptTask>
+        <bpmn:subProcess id="Node_SUBPROCESS" name="SUBPROCESS NODE">
+            <bpmn:incoming>Flow_FLOW_SUBPROCESS</bpmn:incoming>
+            <bpmn:outgoing>Flow_SUBPROCESS_USERTASK</bpmn:outgoing>
+        </bpmn:subProcess>
+        <bpmn:userTask id="Node_USERTASK" name="USER TASK NODE">
+            <bpmn:incoming>Flow_HTTP_USERTASK</bpmn:incoming>
+            <bpmn:incoming>Flow_SCRIPT_USERTASK</bpmn:incoming>
+            <bpmn:incoming>Flow_SUBPROCESS_USERTASK</bpmn:incoming>
+            <bpmn:outgoing>Flow_USERTASK_TIMER</bpmn:outgoing>
+        </bpmn:userTask>
+        <bpmn:intermediateCatchEvent id="Node_TIMER" name="TIMER NODE" EventDefinition="TimerEventDefinition">
+            <bpmn:incoming>Flow_USERTASK_TIMER</bpmn:incoming>
+            <bpmn:outgoing>Flow_TIMER_ABORT</bpmn:outgoing>
+        </bpmn:intermediateCatchEvent>
+        <bpmn:serviceTask id="Node_ABORT" name="ABORT NODE">
+            <bpmn:incoming>Flow_TIMER_ABORT</bpmn:incoming>
+            <bpmn:outgoing>Flow_ABORT_STARTPROCESS</bpmn:outgoing>
+        </bpmn:serviceTask>
+        <bpmn:serviceTask id="Node_STARTPROCESS" name="START PROCESS NODE">
+            <bpmn:incoming>Flow_ABORT_STARTPROCESS</bpmn:incoming>
+            <bpmn:outgoing>Flow_STARTPROCESS_END</bpmn:outgoing>
+        </bpmn:serviceTask>
+        <bpmn:endEvent id="Node_END" name="FINISH NODE">
+            <bpmn:incoming>Flow_STARTPROCESS_END</bpmn:incoming>
+        </bpmn:endEvent>
+        <bpmn:sequenceFlow id="Flow_START_SETTOBAG" sourceRef="Node_START" targetRef="Node_SETTOBAG" />
+        <bpmn:sequenceFlow id="Flow_SETTOBAG_FLOW" sourceRef="Node_SETTOBAG" targetRef="Node_FLOW" />
+        <bpmn:sequenceFlow id="Flow_FLOW_SCRIPT" sourceRef="Node_FLOW" targetRef="Node_SCRIPT" />
+        <bpmn:sequenceFlow id="Flow_FLOW_HTTP" sourceRef="Node_FLOW" targetRef="Node_HTTP" />
+        <bpmn:sequenceFlow id="Flow_FLOW_SUBPROCESS" sourceRef="Node_FLOW" targetRef="Node_SUBPROCESS" />
+        <bpmn:sequenceFlow id="Flow_HTTP_USERTASK" sourceRef="Node_HTTP" targetRef="Node_USERTASK" />
+        <bpmn:sequenceFlow id="Flow_SCRIPT_USERTASK" sourceRef="Node_SCRIPT" targetRef="Node_USERTASK" />
+        <bpmn:sequenceFlow id="Flow_SUBPROCESS_USERTASK" sourceRef="Node_SUBPROCESS" targetRef="Node_USERTASK" />
+        <bpmn:sequenceFlow id="Flow_USERTASK_TIMER" sourceRef="Node_USERTASK" targetRef="Node_TIMER" />
+        <bpmn:sequenceFlow id="Flow_TIMER_ABORT" sourceRef="Node_TIMER" targetRef="Node_ABORT" />
+        <bpmn:sequenceFlow id="Flow_ABORT_STARTPROCESS" sourceRef="Node_ABORT" targetRef="Node_STARTPROCESS" />
+        <bpmn:sequenceFlow id="Flow_STARTPROCESS_END" sourceRef="Node_STARTPROCESS" targetRef="Node_END" />
+    </bpmn:process>
+    <bpmn:collaboration id="Global_Colab" workflowId="d1ff277d-aa11-4d6f-8ea3-7b3a8bdd8bd4">
+        <bpmn:participant id="Global_Actor" name="allNodes" processRef="Global_Process" />
+    </bpmn:collaboration>
+    <bpmndi:BPMNDiagram id="Global_Diagram">
+        <bpmndi:BPMNPlane id="Global_Plane" bpmnElement="Global_Colab">
+            <bpmndi:BPMNShape id="Node_START_di" bpmnElement="Node_START">
+                <dc:Bounds x="114" y="72" width="36" height="36" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Node_SETTOBAG_di" bpmnElement="Node_SETTOBAG" bioc:stroke="#fb8c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#fb8c00">
+                <dc:Bounds x="180" y="50" width="100" height="80" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Node_FLOW_di" bpmnElement="Node_FLOW">
+                <dc:Bounds x="335" y="65" width="50" height="50" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Node_HTTP_di" bpmnElement="Node_HTTP">
+                <dc:Bounds x="440" y="210" width="100" height="80" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Node_SCRIPT_di" bpmnElement="Node_SCRIPT">
+                <dc:Bounds x="440" y="50" width="100" height="80" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Node_SUBPROCESS_di" bpmnElement="Node_SUBPROCESS">
+                <dc:Bounds x="440" y="370" width="100" height="80" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Node_USERTASK_di" bpmnElement="Node_USERTASK" bioc:stroke="#1e88e5" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#1e88e5">
+                <dc:Bounds x="570" y="50" width="100" height="80" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Node_TIMER_di" bpmnElement="Node_TIMER">
+                <dc:Bounds x="728" y="72" width="36" height="36" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Node_ABORT_di" bpmnElement="Node_ABORT" bioc:stroke="#43a047" bioc:fill="#F5A5A3" color:background-color="#F5A5A3" color:border-color="#E72623">
+                <dc:Bounds x="830" y="50" width="100" height="80" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Node_STARTPROCESS_di" bpmnElement="Node_STARTPROCESS" bioc:stroke="#43a047" bioc:fill="#c8e6c9" color:background-color="#c8e6c9" color:border-color="#43a047">
+                <dc:Bounds x="960" y="50" width="100" height="80" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Node_END_di" bpmnElement="Node_END">
+                <dc:Bounds x="1090" y="552" width="36" height="36" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge id="Flow_START_SETTOBAG_di" bpmnElement="Flow_START_SETTOBAG">
+                <di:waypoint x="150" y="90" />
+                <di:waypoint x="160" y="90" />
+                <di:waypoint x="160" y="90" />
+                <di:waypoint x="180" y="90" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_SETTOBAG_FLOW_di" bpmnElement="Flow_SETTOBAG_FLOW">
+                <di:waypoint x="280" y="90" />
+                <di:waypoint x="290" y="90" />
+                <di:waypoint x="290" y="90" />
+                <di:waypoint x="335" y="90" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_FLOW_SCRIPT_di" bpmnElement="Flow_FLOW_SCRIPT">
+                <di:waypoint x="385" y="90" />
+                <di:waypoint x="395" y="90" />
+                <di:waypoint x="395" y="90" />
+                <di:waypoint x="440" y="90" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_FLOW_HTTP_di" bpmnElement="Flow_FLOW_HTTP">
+                <di:waypoint x="385" y="90" />
+                <di:waypoint x="395" y="90" />
+                <di:waypoint x="395" y="250" />
+                <di:waypoint x="440" y="250" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_FLOW_SUBPROCESS_di" bpmnElement="Flow_FLOW_SUBPROCESS">
+                <di:waypoint x="385" y="90" />
+                <di:waypoint x="395" y="90" />
+                <di:waypoint x="395" y="410" />
+                <di:waypoint x="440" y="410" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_HTTP_USERTASK_di" bpmnElement="Flow_HTTP_USERTASK">
+                <di:waypoint x="540" y="250" />
+                <di:waypoint x="550" y="250" />
+                <di:waypoint x="550" y="90" />
+                <di:waypoint x="570" y="90" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_SCRIPT_USERTASK_di" bpmnElement="Flow_SCRIPT_USERTASK">
+                <di:waypoint x="540" y="90" />
+                <di:waypoint x="550" y="90" />
+                <di:waypoint x="550" y="90" />
+                <di:waypoint x="570" y="90" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_SUBPROCESS_USERTASK_di" bpmnElement="Flow_SUBPROCESS_USERTASK">
+                <di:waypoint x="540" y="410" />
+                <di:waypoint x="550" y="410" />
+                <di:waypoint x="550" y="90" />
+                <di:waypoint x="570" y="90" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_USERTASK_TIMER_di" bpmnElement="Flow_USERTASK_TIMER">
+                <di:waypoint x="670" y="90" />
+                <di:waypoint x="680" y="90" />
+                <di:waypoint x="680" y="90" />
+                <di:waypoint x="728" y="90" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_TIMER_ABORT_di" bpmnElement="Flow_TIMER_ABORT">
+                <di:waypoint x="764" y="90" />
+                <di:waypoint x="774" y="90" />
+                <di:waypoint x="774" y="90" />
+                <di:waypoint x="830" y="90" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_ABORT_STARTPROCESS_di" bpmnElement="Flow_ABORT_STARTPROCESS">
+                <di:waypoint x="930" y="90" />
+                <di:waypoint x="940" y="90" />
+                <di:waypoint x="940" y="90" />
+                <di:waypoint x="960" y="90" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_STARTPROCESS_END_di" bpmnElement="Flow_STARTPROCESS_END">
+                <di:waypoint x="1060" y="90" />
+                <di:waypoint x="1070" y="90" />
+                <di:waypoint x="1070" y="570" />
+                <di:waypoint x="1090" y="570" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape id="Lane_1_di" bpmnElement="Lane_1">
+                <dc:Bounds x="80" y="10" width="1140" height="480" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Lane_2_di" bpmnElement="Lane_2">
+                <dc:Bounds x="80" y="490" width="1140" height="160" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Global_Actor_di" bpmnElement="Global_Actor">
+                <dc:Bounds x="50" y="10" width="1170" height="640" />
+            </bpmndi:BPMNShape>
+        </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+</bpmn:definitions>

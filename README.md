@@ -5,35 +5,7 @@ Diagram builder from workflow blueprint
 
 ``` {.sh}
 node -v
-v12.13.0 (lts/dubnium)
-
-npm -v
-6.12.0
-
-moddle-bpmn
-```
-
-## Development guidelines
-
-``` {.js}
-NomeDeClasse
-nomeDeMetodo
-nomeDeFuncao
-nome_de_variavel
-nome_de_getter
-nome_de_setter
-```
-
-``` {.js}
-Classe{
-estáticos
-construtor
-getters que tem setters
-getters sozinhos
-setters sozinhos
-metodos publicos
-metodos privados
-}
+^v14.18.0
 ```
 
 ## Run tests:

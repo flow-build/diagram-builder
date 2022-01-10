@@ -12,8 +12,12 @@
  */
 
 const BpmnModdle = require('bpmn-moddle');
+const formatter = require('xml-formatter');
 const debug = require('debug')('flowbuild:xml-builder');
 const Grid = require('./xml-grid');
+const { nanoid } = require('nanoid')
+const { validateBlueprint } = require('../utils/workflow.validator');
+const { logger } = require('../utils/logger');
 
 class XmlConverter {
   constructor() {
@@ -21,10 +25,7 @@ class XmlConverter {
   }
 
   static validate(spec) {
-    if (!spec.nodes || !spec.lanes) {
-      return false;
-    }
-    return true;
+    return validateBlueprint(spec)
   }
 
   static stdLaneId(lane_id) {
@@ -36,7 +37,7 @@ class XmlConverter {
   }
 
   static stdNodeName(node) {
-    return `${node.id}\n${node.name}`;
+    return `${node.name}`;
   }
 
   static stdFlowId(node_id, node_next) {
@@ -44,12 +45,14 @@ class XmlConverter {
   }
 
   parseNode(node, incoming_flows) {
+    logger.verbose(`[xmlConverter] parseNode ${node}`)
     const params = {
       id: XmlConverter.stdNodeId(node.id),
       name: XmlConverter.stdNodeName(node),
     };
 
     let type = node.type.toLowerCase();
+    let category = node.category?.toLowerCase();
 
     if (type === 'start') {
       params.outgoing = this.parseSequenceFlow(node);
@@ -68,7 +71,17 @@ class XmlConverter {
 
     switch (type) {
     case 'systemtask':
-      return this.moddle.create('bpmn:ServiceTask', params);
+      switch (category) {
+      case 'subprocess':
+        return this.moddle.create('bpmn:SubProcess', params);
+      
+      case 'timer':
+        params['EventDefinition'] = 'TimerEventDefinition';
+        return this.moddle.create('bpmn:IntermediateCatchEvent', params);
+      
+      default:
+        return this.moddle.create('bpmn:ServiceTask', params);
+      }
 
     case 'usertask':
       return this.moddle.create('bpmn:UserTask', params);
@@ -76,15 +89,50 @@ class XmlConverter {
     case 'scripttask':
       return this.moddle.create('bpmn:ScriptTask', params);
 
-    case 'subprocess':
-      return this.moddle.create('bpmn:SubProcess', params);
-
     default:
       return this.moddle.create('bpmn:Task', params);
     }
   }
 
+  getColors(node) {
+    logger.verbose(`[xmlConverter] parseSequenceFlow ${node}`)
+    if(node.category?.toLowerCase() === 'settobag') {
+      return {
+        stroke: "#fb8c00",
+        fill: "#ffe0b2",
+        background: "#ffe0b2",
+        border: "#fb8c00"
+      }
+    }
+    if(node.type?.toLowerCase() === 'usertask') {
+      return {
+        stroke: "#1e88e5",
+        fill: "#bbdefb",
+        background: "#bbdefb",
+        border: "#1e88e5"
+      }
+    }
+    if(node.category?.toLowerCase() === 'startprocess') {
+      return {
+        stroke: "#43a047",
+        fill: "#c8e6c9",
+        background: "#c8e6c9",
+        border: "#43a047"
+      }
+    }
+    if(node.category?.toLowerCase() === 'abortprocess') {
+      return {
+        stroke: "#43a047",
+        fill: "#F5A5A3",
+        background: "#F5A5A3",
+        border: "#E72623"
+      }
+    }
+    return {}
+  }
+
   parseSequenceFlow(node) {
+    logger.verbose(`[xmlConverter] parseSequenceFlow ${node}`)
     let type = node.type.toLowerCase();
     if (type !== 'flow' && type !== 'finish') {
       // If node is not a flow node,
@@ -110,50 +158,58 @@ class XmlConverter {
     return [];
   }
 
-  buildGraph(blueprint_spec, name = null) {
-    if (!XmlConverter.validate(blueprint_spec)) {
-      throw new Error('Invalid spec: no nodes or no lanes.');
+  buildGraph(blueprint) {
+    logger.info(`[xmlConverter] buildGraph`);
+
+    const workflowId = blueprint.workflow_id || nanoid();
+
+    const validation = XmlConverter.validate(blueprint)
+    if (!validation.isValid) {
+      logger.error('[xmlConverter] Invalid blueprint');
+      return {
+        error: validation.errors
+      }
     }
+
+    const spec = blueprint.blueprint_spec;
+    const nodes = blueprint.blueprint_spec.nodes;
+    const lanes = blueprint.blueprint_spec.lanes;
 
     this.xml_participant = this.moddle.create('bpmn:Participant', {
       id: 'Global_Actor',
-      processRef: { id: 'Global_Process' },
-      name,
+      processRef: { id: "Global_Process" },
+      name: blueprint.name,
     });
 
     this.xml_collab = this.moddle.create('bpmn:Collaboration', {
       id: 'Global_Colab',
-      participants: [
-        this.xml_participant,
-      ],
+      participants: [ this.xml_participant ],
+      workflowId
     });
 
-    const { incoming_flows, xml_sequences } = this.buildSequenceFlows(blueprint_spec.nodes);
+    const { incoming_flows, xml_sequences } = this.buildSequenceFlows(nodes);
 
     this.xml_sequences = xml_sequences;
-    this.xml_nodes = this.buildNodes(blueprint_spec.nodes, incoming_flows);
-
-    this.xml_laneset = this.buildLaneset(blueprint_spec.nodes, blueprint_spec.lanes);
+    this.xml_nodes = this.buildNodes(nodes, incoming_flows);
+    this.xml_laneset = this.buildLaneset(nodes, lanes);
 
     const flowElements = this.xml_nodes.concat(this.xml_sequences);
     this.xml_process = this.moddle.create('bpmn:Process', {
-      // id: "Process_01zyiho",
-      id: 'Global_Process',
-      laneSets: [this.xml_laneset],
+      id: "Global_Process",
+      laneSets: [ this.xml_laneset ],
       isExecutable: true,
       flowElements,
     });
 
-    const id2index = this.buildNodesId2Index(blueprint_spec.nodes);
-    const { id2rank, y_depth } = this.discoverNodeRanks(blueprint_spec, id2index);
+    const id2index = this.buildNodesId2Index(nodes);
+    const { id2rank, y_depth } = this.discoverNodeRanks(spec, id2index);
 
-    this.xml_diagrams = this.buildDiagram(blueprint_spec, this.xml_sequences, id2rank, y_depth);
+    this.xml_diagrams = this.buildDiagram(spec, this.xml_sequences, id2rank, y_depth);
 
     const rootElements = [this.xml_process, this.xml_collab, this.xml_diagrams];
     this.root = this.moddle.create('bpmn:Definitions',
       {
         rootElements,
-        // diagrams: this.xml_diagrams
       });
   }
 
@@ -248,6 +304,12 @@ class XmlConverter {
         width: flow_dim,
         height: flow_dim,
       }),
+      timer: (node) => this.moddle.create('dc:Bounds', {
+        x: default_padding + default_x_spacing * id2rank[XmlConverter.stdNodeId(node.id)][0] + default_width - ( 2 * start_stop_dim),
+        y: default_padding + default_y_spacing * id2rank[XmlConverter.stdNodeId(node.id)][1] + (default_height - start_stop_dim) / 2 + lane_heigth_con[lanes_ids.findIndex((el) => el === node.lane_id)],
+        width: start_stop_dim,
+        height: start_stop_dim,
+      }),
       systemtask: default_style,
       usertask: default_style,
       scripttask: default_style,
@@ -258,6 +320,7 @@ class XmlConverter {
     nodes.forEach((node) => {
       try {
         let type = node.type.toLowerCase();
+        (node.category?.toLowerCase() === 'timer') ? type = 'timer' : type
         bounds_array[XmlConverter.stdNodeId(node.id)] = bounds_style[type](node);
       } catch (e) {
         debug('Error in node ', node.id);
@@ -268,9 +331,15 @@ class XmlConverter {
     const diagram_nodes = nodes.map((node) => {
       const bounds = bounds_array[XmlConverter.stdNodeId(node.id)];
 
+      const colors = this.getColors(node)
+
       return this.moddle.create('bpmndi:BPMNShape', {
         id: `${XmlConverter.stdNodeId(node.id)}_di`,
         bpmnElement: { id: XmlConverter.stdNodeId(node.id) },
+        'bioc:stroke':colors.stroke,
+        'bioc:fill': colors.fill,
+        'color:background-color': colors.background,
+        'color:border-color': colors.border,
         bounds,
       });
     });
@@ -510,7 +579,10 @@ class XmlConverter {
 
   async to_xml(format=false) {
     const { xml } = await this.moddle.toXML(this.root, { format });
-    return xml;
+    return formatter(xml, {
+      collapseContent: true,
+      whiteSpaceAtEndOfSelfclosingTag: true
+    });
   }
 }
 
