@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 /* @file xml-converter.js
  *
  * @brief Loads a json blueprint and build a bpmn xml representation
@@ -46,24 +47,44 @@ class XmlConverter {
 
   parseNode(node, incoming_flows) {
     logger.verbose(`[xmlConverter] parseNode ${node}`)
-    const params = {
-      id: XmlConverter.stdNodeId(node.id),
-      name: XmlConverter.stdNodeName(node),
-    };
 
     let type = node.type.toLowerCase();
     let category = node.category?.toLowerCase();
 
+    let parameters = JSON.stringify(node.parameters);
+    let singleQuoted = "{}"
+    if(parameters) {
+      singleQuoted = parameters.replace(/\\"/g, '"')
+        .replace(/([\{|:|,])(?:[\s]*)(")/g, "$1'")
+        .replace(/(?:[\s]*)(?:")([\}|,|:])/g, "'$1")
+        .replace(/([^\{|:|,])(?:')([^\}|,|:])/g, "$1\\'$2");
+    }
+
+    const params = {
+      id: XmlConverter.stdNodeId(node.id),
+      name: XmlConverter.stdNodeName(node)
+    };
+
+    let _xmlNode;
     if (type === 'start') {
       params.outgoing = this.parseSequenceFlow(node);
-      return this.moddle.create('bpmn:StartEvent', params);
+      _xmlNode = this.moddle.create('bpmn:StartEvent', params);
+      _xmlNode.$attrs['xmlns:custom'] = 'http://custom/ns';
+      _xmlNode.set('custom:parameters', singleQuoted);
+      return _xmlNode;
     } if (type === 'finish') {
       params.incoming = incoming_flows[XmlConverter.stdNodeId(node.id)];
-      return this.moddle.create('bpmn:EndEvent', params);
+      _xmlNode = this.moddle.create('bpmn:EndEvent', params);
+      _xmlNode.$attrs['xmlns:custom'] = 'http://custom/ns';
+      _xmlNode.set('custom:parameters', singleQuoted);
+      return _xmlNode;
     } if (type === 'flow') {
       params.incoming = incoming_flows[XmlConverter.stdNodeId(node.id)];
       params.outgoing = this.parseSequenceFlow(node);
-      return this.moddle.create('bpmn:ExclusiveGateway', params);
+      _xmlNode = this.moddle.create('bpmn:ExclusiveGateway', params);
+      _xmlNode.$attrs['xmlns:custom'] = 'http://custom/ns';
+      _xmlNode.set('custom:parameters', singleQuoted);
+      return _xmlNode;
     }
 
     params.outgoing = this.parseSequenceFlow(node);
@@ -73,24 +94,45 @@ class XmlConverter {
     case 'systemtask':
       switch (category) {
       case 'subprocess':
-        return this.moddle.create('bpmn:SubProcess', params);
-      
+        _xmlNode = this.moddle.create('bpmn:SubProcess', params);
+        _xmlNode.$attrs['xmlns:custom'] = 'http://custom/ns';
+        _xmlNode.set('custom:parameters', singleQuoted);
+        _xmlNode.set('custom:category', category)
+        return _xmlNode;
       case 'timer':
-        params['EventDefinition'] = 'TimerEventDefinition';
-        return this.moddle.create('bpmn:IntermediateCatchEvent', params);
-      
+        //TODO: como incluir o timerEventDefinition como uma nested property
+        _xmlNode = this.moddle.create('bpmn:IntermediateCatchEvent', {...params,
+          'EventDefinition': 'timerEventDefinition'
+        });
+        _xmlNode.$attrs['xmlns:custom'] = 'http://custom/ns';
+        _xmlNode.set('custom:parameters', singleQuoted);
+        _xmlNode.set('custom:category', category)
+        return _xmlNode;
       default:
-        return this.moddle.create('bpmn:ServiceTask', params);
+        _xmlNode = this.moddle.create('bpmn:ServiceTask', params);
+        _xmlNode.$attrs['xmlns:custom'] = 'http://custom/ns';
+        _xmlNode.set('custom:parameters', singleQuoted);
+        _xmlNode.set('custom:category', category)
+        return _xmlNode;
       }
 
     case 'usertask':
-      return this.moddle.create('bpmn:UserTask', params);
+      _xmlNode = this.moddle.create('bpmn:UserTask', params);
+      _xmlNode.$attrs['xmlns:custom'] = 'http://custom/ns';
+      _xmlNode.set('custom:parameters', singleQuoted);
+      return _xmlNode;
 
     case 'scripttask':
-      return this.moddle.create('bpmn:ScriptTask', params);
+      _xmlNode = this.moddle.create('bpmn:ScriptTask', params);
+      _xmlNode.$attrs['xmlns:custom'] = 'http://custom/ns';
+      _xmlNode.set('custom:parameters', singleQuoted);
+      return _xmlNode;
 
     default:
-      return this.moddle.create('bpmn:Task', params);
+      _xmlNode = this.moddle.create('bpmn:Task', params);
+      _xmlNode.$attrs['xmlns:custom'] = 'http://custom/ns';
+      _xmlNode.set('custom:parameters', singleQuoted);
+      return _xmlNode;
     }
   }
 
