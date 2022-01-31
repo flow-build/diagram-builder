@@ -1,3 +1,10 @@
+## [1.1.0](https://github.com/flow-build/nodejs-diagram-builder/compare/v1.0.0...v1.1.0) (2022-01-31)
+
+
+### Features
+
+* add parameters and category when converting to xml ([b520e73](https://github.com/flow-build/nodejs-diagram-builder/commit/b520e73e19d562f1a75e5f5bb90e028e0e2063ea))
+
 ## 1.0.0 (2022-01-10)
 
 
