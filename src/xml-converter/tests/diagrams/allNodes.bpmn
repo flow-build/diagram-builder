@@ -18,50 +18,50 @@
                 <bpmn:flowNodeRef>Node_END</bpmn:flowNodeRef>
             </bpmn:lane>
         </bpmn:laneSet>
-        <bpmn:startEvent id="Node_START" name="START NODE">
+        <bpmn:startEvent xmlns:custom="http://custom/ns" id="Node_START" name="START NODE" custom:parameters="{&#39;input_schema&#39;:{}}">
             <bpmn:outgoing>Flow_START_SETTOBAG</bpmn:outgoing>
         </bpmn:startEvent>
-        <bpmn:serviceTask id="Node_SETTOBAG" name="SET TO BAG NODE">
+        <bpmn:serviceTask xmlns:custom="http://custom/ns" id="Node_SETTOBAG" name="SET TO BAG NODE" custom:parameters="{&#39;input&#39;:{}}" custom:category="settobag">
             <bpmn:incoming>Flow_START_SETTOBAG</bpmn:incoming>
             <bpmn:outgoing>Flow_SETTOBAG_FLOW</bpmn:outgoing>
         </bpmn:serviceTask>
-        <bpmn:exclusiveGateway id="Node_FLOW" name="FLOW NODE">
+        <bpmn:exclusiveGateway xmlns:custom="http://custom/ns" id="Node_FLOW" name="FLOW NODE" custom:parameters="{&#39;input&#39;:{&#39;decision&#39;:{&#39;$ref&#39;:&#39;result.value&#39;}}}">
             <bpmn:incoming>Flow_SETTOBAG_FLOW</bpmn:incoming>
             <bpmn:outgoing>Flow_FLOW_SCRIPT</bpmn:outgoing>
             <bpmn:outgoing>Flow_FLOW_HTTP</bpmn:outgoing>
             <bpmn:outgoing>Flow_FLOW_SUBPROCESS</bpmn:outgoing>
         </bpmn:exclusiveGateway>
-        <bpmn:serviceTask id="Node_HTTP" name="HTTP NODE">
+        <bpmn:serviceTask xmlns:custom="http://custom/ns" id="Node_HTTP" name="HTTP NODE" custom:parameters="{&#39;input&#39;:{}}" custom:category="http">
             <bpmn:incoming>Flow_FLOW_HTTP</bpmn:incoming>
             <bpmn:outgoing>Flow_HTTP_USERTASK</bpmn:outgoing>
         </bpmn:serviceTask>
-        <bpmn:scriptTask id="Node_SCRIPT" name="SCRIPT NODE">
+        <bpmn:scriptTask xmlns:custom="http://custom/ns" id="Node_SCRIPT" name="SCRIPT NODE" custom:parameters="{&#39;input&#39;:{},&#39;script&#39;:{&#39;package&#39;:&#39;&#39;,&#39;function&#39;:[&#34;fn&#39;,[&#34;&#38;&#39;,&#39;args&#34;],[&#34;js&#39;,[&#34;`&#39;,&#39;const val = {&#39;value&#39;: 2}; val&#34;]]]}}">
             <bpmn:incoming>Flow_FLOW_SCRIPT</bpmn:incoming>
             <bpmn:outgoing>Flow_SCRIPT_USERTASK</bpmn:outgoing>
         </bpmn:scriptTask>
-        <bpmn:subProcess id="Node_SUBPROCESS" name="SUBPROCESS NODE">
+        <bpmn:subProcess xmlns:custom="http://custom/ns" id="Node_SUBPROCESS" name="SUBPROCESS NODE" custom:parameters="{&#39;input&#39;:{&#39;value&#39;:&#39;1&#39;}}" custom:category="subprocess">
             <bpmn:incoming>Flow_FLOW_SUBPROCESS</bpmn:incoming>
             <bpmn:outgoing>Flow_SUBPROCESS_USERTASK</bpmn:outgoing>
         </bpmn:subProcess>
-        <bpmn:userTask id="Node_USERTASK" name="USER TASK NODE">
+        <bpmn:userTask xmlns:custom="http://custom/ns" id="Node_USERTASK" name="USER TASK NODE" custom:parameters="{&#39;action&#39;:&#39;ANY&#39;,&#39;input&#39;:{&#39;value&#39;:&#39;not 1&#39;}}">
             <bpmn:incoming>Flow_HTTP_USERTASK</bpmn:incoming>
             <bpmn:incoming>Flow_SCRIPT_USERTASK</bpmn:incoming>
             <bpmn:incoming>Flow_SUBPROCESS_USERTASK</bpmn:incoming>
             <bpmn:outgoing>Flow_USERTASK_TIMER</bpmn:outgoing>
         </bpmn:userTask>
-        <bpmn:intermediateCatchEvent id="Node_TIMER" name="TIMER NODE" EventDefinition="TimerEventDefinition">
+        <bpmn:intermediateCatchEvent xmlns:custom="http://custom/ns" id="Node_TIMER" name="TIMER NODE" EventDefinition="timerEventDefinition" custom:parameters="{&#39;timeout&#39;:10,&#39;input&#39;:{}}" custom:category="timer">
             <bpmn:incoming>Flow_USERTASK_TIMER</bpmn:incoming>
             <bpmn:outgoing>Flow_TIMER_ABORT</bpmn:outgoing>
         </bpmn:intermediateCatchEvent>
-        <bpmn:serviceTask id="Node_ABORT" name="ABORT NODE">
+        <bpmn:serviceTask xmlns:custom="http://custom/ns" id="Node_ABORT" name="ABORT NODE" custom:parameters="{&#39;input&#39;:{}}" custom:category="abortprocess">
             <bpmn:incoming>Flow_TIMER_ABORT</bpmn:incoming>
             <bpmn:outgoing>Flow_ABORT_STARTPROCESS</bpmn:outgoing>
         </bpmn:serviceTask>
-        <bpmn:serviceTask id="Node_STARTPROCESS" name="START PROCESS NODE">
+        <bpmn:serviceTask xmlns:custom="http://custom/ns" id="Node_STARTPROCESS" name="START PROCESS NODE" custom:parameters="{&#39;input&#39;:{}}" custom:category="startprocess">
             <bpmn:incoming>Flow_ABORT_STARTPROCESS</bpmn:incoming>
             <bpmn:outgoing>Flow_STARTPROCESS_END</bpmn:outgoing>
         </bpmn:serviceTask>
-        <bpmn:endEvent id="Node_END" name="FINISH NODE">
+        <bpmn:endEvent xmlns:custom="http://custom/ns" id="Node_END" name="FINISH NODE" custom:parameters="{}">
             <bpmn:incoming>Flow_STARTPROCESS_END</bpmn:incoming>
         </bpmn:endEvent>
         <bpmn:sequenceFlow id="Flow_START_SETTOBAG" sourceRef="Node_START" targetRef="Node_SETTOBAG" />

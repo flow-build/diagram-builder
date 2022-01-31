@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 require('jest-xml-matcher')
 const { XmlConverter } = require('../xmlConverter');
 const fs = require('fs')
@@ -61,7 +62,7 @@ describe('Node Parser', () => {
     const converter = new XmlConverter();
     const sequences = converter.buildSequenceFlows(simpleWorkflow.blueprint_spec.nodes);
     const expectedXML = '<bpmn:startEvent xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
-      'id="Node_1" name="Start node">' +
+      'xmlns:custom=\"http://custom/ns\" id=\"Node_1\" name=\"Start node\" custom:parameters=\"{&#39;input_schema&#39;:{}}">' +
       '<bpmn:outgoing>Flow_1_2</bpmn:outgoing>' +
       '</bpmn:startEvent>';
 
@@ -75,7 +76,7 @@ describe('Node Parser', () => {
     const sequences = converter.buildSequenceFlows(simpleWorkflow.blueprint_spec.nodes);
     
     const expectedXML = '<bpmn:endEvent xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
-      'id="Node_99" name="Finish node">' +
+      'xmlns:custom=\"http://custom/ns\" id=\"Node_99\" name=\"Finish node\" custom:parameters=\"{&#39;input_schema&#39;:{}}">' +
       '<bpmn:incoming>Flow_2_99</bpmn:incoming>' +
       '</bpmn:endEvent>';
 
@@ -89,7 +90,7 @@ describe('Node Parser', () => {
     const sequences = converter.buildSequenceFlows(simpleWorkflow.blueprint_spec.nodes);
     
     const expectedXML = '<bpmn:serviceTask xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
-      'id="Node_2" name="Set to bag node">' +
+      'xmlns:custom=\"http://custom/ns\" id=\"Node_2\" name=\"Set to bag node\" custom:parameters=\"{&#39;input&#39;:{&#39;creatorId&#39;:{&#39;$ref&#39;:&#39;actor_data.actor_id&#39;}}}\" custom:category=\"settobag">' +
       '<bpmn:incoming>Flow_1_2</bpmn:incoming>' +
       '<bpmn:outgoing>Flow_2_99</bpmn:outgoing>' +
       '</bpmn:serviceTask>';
@@ -104,7 +105,7 @@ describe('Node Parser', () => {
     const sequences = converter.buildSequenceFlows(scriptExample.blueprint_spec.nodes);
 
     const expectedXML = '<bpmn:scriptTask xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
-      'id="Node_2" name="Script tag">' +
+      'xmlns:custom=\"http://custom/ns\" id=\"Node_2\" name=\"Script tag\" custom:parameters=\"{&#39;input&#39;:{},&#39;script&#39;:{&#39;package&#39;:&#39;&#39;,&#39;function&#39;:[&#34;fn&#39;,[&#34;&#38;&#39;,&#39;args&#34;],1]}}">' +
       '<bpmn:incoming>Flow_1_2</bpmn:incoming>' +
       '<bpmn:outgoing>Flow_2_99</bpmn:outgoing>' +
       '</bpmn:scriptTask>';
@@ -188,14 +189,14 @@ describe('Collab parser', () => {
       '<bpmn:flowNodeRef>Node_99</bpmn:flowNodeRef>' +
       '</bpmn:lane>' +
       '</bpmn:laneSet>' +
-      '<bpmn:startEvent id="Node_1" name="Start node">' +
+      '<bpmn:startEvent xmlns:custom=\"http://custom/ns\" id=\"Node_1\" name=\"Start node\" custom:parameters=\"{&#39;input_schema&#39;:{}}\">' +
       '<bpmn:outgoing>Flow_1_2</bpmn:outgoing>' +
       '</bpmn:startEvent>' +
-      '<bpmn:serviceTask id="Node_2" name="Set to bag node">' +
+      '<bpmn:serviceTask xmlns:custom=\"http://custom/ns\" id=\"Node_2\" name=\"Set to bag node\" custom:parameters=\"{&#39;input&#39;:{&#39;creatorId&#39;:{&#39;$ref&#39;:&#39;actor_data.actor_id&#39;}}}\" custom:category=\"settobag\">' +
       '<bpmn:incoming>Flow_1_2</bpmn:incoming>' +
       '<bpmn:outgoing>Flow_2_99</bpmn:outgoing>' +
       '</bpmn:serviceTask>' +
-      '<bpmn:endEvent id="Node_99" name="Finish node">' +
+      '<bpmn:endEvent xmlns:custom=\"http://custom/ns\" id=\"Node_99\" name=\"Finish node\" custom:parameters=\"{&#39;input_schema&#39;:{}}\">' +
       '<bpmn:incoming>Flow_2_99</bpmn:incoming>' +
       '</bpmn:endEvent>' +
       '<bpmn:sequenceFlow id="Flow_1_2" sourceRef="Node_1" targetRef="Node_2" />' +
@@ -214,7 +215,7 @@ describe('xml generator', () => {
     const diagram = fs.readFileSync('src/xml-converter/tests/diagrams/simpleWorkflow.bpmn', 'UTF-8')
     converter.buildGraph(simpleWorkflow);
     const result = await converter.to_xml();
-    //fs.writeFileSync(`assets/result.bpmn`, result);
+    fs.writeFileSync(`assets/result.bpmn`, result);
     expect(result).toEqualXML(diagram);
   });
 

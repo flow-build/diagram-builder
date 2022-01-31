@@ -8,14 +8,14 @@
                 <bpmn:flowNodeRef>Node_99</bpmn:flowNodeRef>
             </bpmn:lane>
         </bpmn:laneSet>
-        <bpmn:startEvent id="Node_1" name="Start node">
+        <bpmn:startEvent xmlns:custom="http://custom/ns" id="Node_1" name="Start node" custom:parameters="{&#39;input_schema&#39;:{}}">
             <bpmn:outgoing>Flow_1_2</bpmn:outgoing>
         </bpmn:startEvent>
-        <bpmn:serviceTask id="Node_2" name="Set to bag node">
+        <bpmn:serviceTask xmlns:custom="http://custom/ns" id="Node_2" name="Set to bag node" custom:parameters="{&#39;input&#39;:{&#39;creatorId&#39;:{&#39;$ref&#39;:&#39;actor_data.actor_id&#39;}}}" custom:category="settobag">
             <bpmn:incoming>Flow_1_2</bpmn:incoming>
             <bpmn:outgoing>Flow_2_99</bpmn:outgoing>
         </bpmn:serviceTask>
-        <bpmn:endEvent id="Node_99" name="Finish node">
+        <bpmn:endEvent xmlns:custom="http://custom/ns" id="Node_99" name="Finish node" custom:parameters="{&#39;input_schema&#39;:{}}">
             <bpmn:incoming>Flow_2_99</bpmn:incoming>
         </bpmn:endEvent>
         <bpmn:sequenceFlow id="Flow_1_2" sourceRef="Node_1" targetRef="Node_2" />
